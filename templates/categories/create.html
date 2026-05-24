@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Новая категория - Финансы{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Новая категория</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('category_create') }}">
+                    <!-- Название -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-tag me-1"></i>Название <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="name" name="name" required placeholder="Например: Продукты">
+                    </div>
+
+                    <!-- Тип -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-sort me-1"></i>Тип <span class="text-danger">*</span>
+                        </label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="type" id="typeExpense" value="expense" 
+                                   {% if request.args.get('type') == 'expense' %}checked{% endif %}>
+                            <label class="form-check-label" for="typeExpense">
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-arrow-down me-1"></i>Расход
+                                </span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="type" id="typeIncome" value="income"
+                                   {% if request.args.get('type') == 'income' %}checked{% endif %}>
+                            <label class="form-check-label" for="typeIncome">
+                                <span class="badge bg-success">
+                                    <i class="fas fa-arrow-up me-1"></i>Доход
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Цвет -->
+                    <div class="mb-3">
+                        <label for="color" class="form-label">
+                            <i class="fas fa-palette me-1"></i>Цвет
+                        </label>
+                        <input type="color" class="form-control form-control-color" id="color" name="color" value="#808080" 
+                               style="height: 45px; padding: 5px; width: 100%;">
+                    </div>
+
+                    <!-- МЕСЯЧНЫЙ ЛИМИТ (только для расходов) -->
+                    <div class="mb-3" id="limitBlock" style="display: none;">
+                        <label for="monthly_limit" class="form-label">
+                            <i class="fas fa-chart-line me-1"></i>Месячный лимит (₽)
+                        </label>
+                        <input type="number" class="form-control" id="monthly_limit" name="monthly_limit" 
+                               step="0.01" min="0" placeholder="Необязательно">
+                        <small class="text-muted">Установите лимит для отслеживания бюджета (только для расходов)</small>
+                    </div>
+
+                    <!-- Кнопки -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('categories_list') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Показываем/скрываем поле лимита в зависимости от типа категории
+    const typeExpense = document.getElementById('typeExpense');
+    const typeIncome = document.getElementById('typeIncome');
+    const limitBlock = document.getElementById('limitBlock');
+    
+    function toggleLimitField() {
+        if (typeExpense.checked) {
+            limitBlock.style.display = 'block';
+        } else {
+            limitBlock.style.display = 'none';
+            document.getElementById('monthly_limit').value = '';
+        }
+    }
+    
+    typeExpense.addEventListener('change', toggleLimitField);
+    typeIncome.addEventListener('change', toggleLimitField);
+    
+    // Проверяем при загрузке страницы
+    toggleLimitField();
+</script>
+{% endblock %}

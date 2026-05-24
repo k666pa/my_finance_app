@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование транзакции - Финансы{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>
+                    Редактирование транзакции
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('transaction_edit', id=transaction.id) }}">
+                    
+                    <!-- Категория -->
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Категория <span class="text-danger">*</span></label>
+                        <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="">Выберите категорию</option>
+                            <optgroup label="Расходы">
+                                {% for cat in categories if cat.type == 'expense' %}
+                                <option value="{{ cat.id }}" 
+                                        {% if cat.id == transaction.category_id %}selected{% endif %}
+                                        style="color: {{ cat.color }};">
+                                    {{ cat.name }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="Доходы">
+                                {% for cat in categories if cat.type == 'income' %}
+                                <option value="{{ cat.id }}"
+                                        {% if cat.id == transaction.category_id %}selected{% endif %}
+                                        style="color: {{ cat.color }};">
+                                    {{ cat.name }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- Счет -->
+                    <div class="mb-3">
+                        <label for="account_id" class="form-label">Счет <span class="text-danger">*</span></label>
+                        <select class="form-select" id="account_id" name="account_id" required>
+                            <option value="">Выберите счет</option>
+                            {% for account in accounts %}
+                            <option value="{{ account.id }}" {% if account.id == transaction.account_id %}selected{% endif %}>
+                                <i class="fas {{ account.icon }}"></i> {{ account.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Сумма -->
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Сумма <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="amount" name="amount" 
+                                   step="0.01" min="0.01" value="{{ transaction.amount }}" required>
+                            <span class="input-group-text">₽</span>
+                        </div>
+                    </div>
+
+                    <!-- Дата -->
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Дата</label>
+                        <input type="date" class="form-control" id="date" name="date" 
+                               value="{{ transaction.date.strftime('%Y-%m-%d') }}">
+                    </div>
+
+                    <!-- Комментарий -->
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Комментарий</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="2">{{ transaction.comment or '' }}</textarea>
+                    </div>
+
+                    <!-- Кнопки -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('transactions_list') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

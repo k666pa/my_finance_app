@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Учет финансов{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome для иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Пользовательские стили -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Тёмная тема -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-wallet me-2"></i>Финансы
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Левая часть меню (основные ссылки) -->
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i>Главная
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('categories_list') }}">
+                            <i class="fas fa-tags me-1"></i>Категории
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('transactions_list') }}">
+                            <i class="fas fa-exchange-alt me-1"></i>Транзакции
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('regular_transactions_list') }}">
+                            <i class="fas fa-sync-alt me-1"></i>Регулярные
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('accounts_list') }}">
+                            <i class="fas fa-credit-card me-1"></i>Счета
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Правая часть меню (пользователь и выход) -->
+                <ul class="navbar-nav">
+                    <!-- Кнопка переключения темы -->
+                    <li class="nav-item me-2">
+                        <button class="btn btn-outline-light" id="themeToggle" style="border-radius: 50%; width: 40px; height: 40px;" title="Переключить тему">
+                            <i class="fas fa-moon" id="themeIcon"></i>
+                        </button>
+                    </li>
+                    {% if session.user_id %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle me-1"></i>
+                                {{ g.user.username if g.user else 'Пользователь' }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#backupModal">
+                                        <i class="fas fa-database me-2"></i>Резервное копирование
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('login') }}">
+                                <i class="fas fa-sign-in-alt me-1"></i>Вход
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('register') }}">
+                                <i class="fas fa-user-plus me-1"></i>Регистрация
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container my-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Скрипт для сортировки категорий -->
+    <script src="{{ url_for('static', filename='js/category-sort.js') }}"></script>
+    <!-- Скрипт для фильтрации транзакций -->
+    <script src="{{ url_for('static', filename='js/transaction-filters.js') }}"></script>
+
+    <!-- Скрипт для тёмной темы -->
+    <script>
+        // Функция для обновления графиков при смене темы
+        function updateCharts() {
+            // Если есть глобальные переменные с графиками
+            if (typeof trendChart !== 'undefined' && trendChart) {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                if (trendChart.options.scales) {
+                    if (trendChart.options.scales.y && trendChart.options.scales.y.ticks) {
+                        trendChart.options.scales.y.ticks.color = isDark ? '#ffffff' : '#212529';
+                    }
+                    if (trendChart.options.scales.x && trendChart.options.scales.x.ticks) {
+                        trendChart.options.scales.x.ticks.color = isDark ? '#ffffff' : '#212529';
+                    }
+                }
+                trendChart.update();
+            }
+            if (typeof pieChart !== 'undefined' && pieChart) {
+                pieChart.update();
+            }
+        }
+
+        // Проверяем сохраненную тему в localStorage
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            const themeIcon = document.getElementById('themeIcon');
+            if (themeIcon) themeIcon.className = 'fas fa-sun';
+        }
+        
+        // Переключение темы
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const themeIcon = document.getElementById('themeIcon');
+                if (currentTheme === 'dark') {
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                    if (themeIcon) themeIcon.className = 'fas fa-moon';
+                } else {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                    if (themeIcon) themeIcon.className = 'fas fa-sun';
+                }
+                // Обновляем графики
+                setTimeout(updateCharts, 100);
+            });
+        }
+    </script>
+
+    <!-- Модальное окно для резервного копирования -->
+    <div class="modal fade" id="backupModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-database me-2"></i>Резервное копирование
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-grid gap-3">
+                        <a href="{{ url_for('backup_download') }}" class="btn btn-success">
+                            <i class="fas fa-download me-2"></i>Скачать резервную копию
+                        </a>
+                        <hr>
+                        <form method="POST" action="{{ url_for('backup_restore') }}" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="backup_file" class="form-label">Восстановить из файла</label>
+                                <input type="file" class="form-control" id="backup_file" name="backup_file" accept=".db" required>
+                                <small class="text-muted">Выберите ранее сохраненный .db файл</small>
+                            </div>
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="fas fa-upload me-2"></i>Восстановить
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <small class="text-muted">Внимание! Восстановление заменит текущую базу данных.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

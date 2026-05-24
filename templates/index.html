@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Учет финансов{% endblock %}
+
+{% block content %}
+<style>
+    .stat-card {
+        transition: transform 0.2s;
+        cursor: pointer;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .progress-bar-custom {
+        transition: width 0.3s ease;
+    }
+    .budget-item {
+        transition: all 0.2s;
+    }
+    .budget-item:hover {
+        transform: translateX(5px);
+        background-color: #f8f9fa;
+    }
+    .period-picker {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+</style>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;">
+            <div class="card-body text-center py-5">
+                <h1 class="display-4 fw-bold" style="color: white !important;">Личный финансовый учет</h1>
+                <p class="lead mb-0 mt-2" style="color: rgba(255,255,255,0.9) !important;">Контролируйте свои финансы эффективно</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Блок 1: Виджет баланса -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card bg-success text-white stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Доходы (30 дней)</h6>
+                        <h3 id="totalIncome" class="mb-0">0 ₽</h3>
+                    </div>
+                    <i class="fas fa-arrow-up fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card bg-danger text-white stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Расходы (30 дней)</h6>
+                        <h3 id="totalExpense" class="mb-0">0 ₽</h3>
+                    </div>
+                    <i class="fas fa-arrow-down fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card bg-info text-white stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Текущий баланс</h6>
+                        <h3 id="currentBalance" class="mb-0">0 ₽</h3>
+                    </div>
+                    <i class="fas fa-wallet fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card bg-warning text-dark stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title">Среднее в день</h6>
+                        <h3 id="dailyAverage" class="mb-0">0 ₽</h3>
+                    </div>
+                    <i class="fas fa-chart-line fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- График за 30 дней -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-line me-2"></i>
+                Динамика доходов и расходов за последние 30 дней
+            </div>
+            <div class="card-body">
+                <canvas id="trendChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Блок 2: Выбор произвольного периода и круговая диаграмма -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-calendar-alt me-2"></i>
+                Анализ за произвольный период
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="period-picker">
+                            <label class="form-label">Дата начала</label>
+                            <input type="date" id="startDate" class="form-control mb-3">
+                            
+                            <label class="form-label">Дата окончания</label>
+                            <input type="date" id="endDate" class="form-control mb-3">
+                            
+                            <button id="applyPeriodBtn" class="btn btn-primary w-100">
+                                <i class="fas fa-chart-pie me-1"></i>Показать аналитику
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <div class="alert alert-success text-center" style="background-color: var(--alert-success-bg); color: var(--alert-success-text);">
+                                    <strong>Доходы за период</strong><br>
+                                    <span id="periodIncome" class="fs-4">0 ₽</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="alert alert-danger text-center" style="background-color: var(--alert-danger-bg); color: var(--alert-danger-text);">
+                                    <strong>Расходы за период</strong><br>
+                                    <span id="periodExpense" class="fs-4">0 ₽</span>
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="categoryPieChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Блок 3: Таблица расходов по категориям за период -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-table me-2"></i>
+                Детализация расходов по категориям
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Категория</th>
+                                <th class="text-end">Сумма расходов</th>
+                                <th class="text-end">Доля от общих расходов</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expensesTableBody">
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">Выберите период для анализа</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Блок 4: Прогресс по бюджету -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-simple me-2"></i>
+                Бюджет на текущий месяц
+            </div>
+            <div class="card-body" id="budgetList">
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                    <p>Загрузка данных бюджета...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Глобальные переменные для графиков
+let trendChart = null;
+let pieChart = null;
+
+// Функция форматирования чисел
+function formatMoney(amount) {
+    return new Intl.NumberFormat('ru-RU', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+    }).format(amount) + ' ₽';
+}
+
+// 1. Загрузка данных и построение графика за 30 дней
+async function loadLast30DaysStats() {
+    try {
+        const response = await fetch('/api/stats/last-30-days');
+        if (!response.ok) throw new Error('Ошибка загрузки');
+        const data = await response.json();
+        
+        // Обновляем виджеты
+        const totalIncome = data.income.reduce((a, b) => a + b, 0);
+        const totalExpense = data.expense.reduce((a, b) => a + b, 0);
+        const currentBalance = totalIncome - totalExpense;
+        const dailyAverage = totalExpense / 30;
+        
+        document.getElementById('totalIncome').innerHTML = formatMoney(totalIncome);
+        document.getElementById('totalExpense').innerHTML = formatMoney(totalExpense);
+        document.getElementById('currentBalance').innerHTML = formatMoney(currentBalance);
+        document.getElementById('dailyAverage').innerHTML = formatMoney(dailyAverage);
+        
+        // Строим график
+        if (trendChart) {
+            trendChart.destroy();
+        }
+        
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        trendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.dates,
+                datasets: [
+                    {
+                        label: 'Доходы',
+                        data: data.income,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Расходы',
+                        data: data.expense,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + formatMoney(context.raw);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('ru-RU') + ' ₽';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Ошибка загрузки статистики:', error);
+        document.getElementById('trendChart').parentNode.innerHTML = '<div class="alert alert-warning">Нет данных для отображения графика. Добавьте транзакции.</div>';
+    }
+}
+
+// 2. Загрузка данных за произвольный период
+async function loadPeriodStats(startDate, endDate) {
+    console.log('Загружаем данные за период:', startDate, 'до', endDate);
+    
+    try {
+        const response = await fetch(`/api/stats/period?start_date=${startDate}&end_date=${endDate}`);
+        console.log('Ответ сервера:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Ошибка ответа:', errorText);
+            throw new Error('Ошибка загрузки');
+        }
+        
+        const data = await response.json();
+        console.log('Полученные данные:', data);
+        
+        // Обновляем статистику
+        const periodIncomeEl = document.getElementById('periodIncome');
+        const periodExpenseEl = document.getElementById('periodExpense');
+        
+        if (periodIncomeEl) {
+            periodIncomeEl.innerHTML = formatMoney(data.stats.total_income);
+        }
+        
+        if (periodExpenseEl) {
+            periodExpenseEl.innerHTML = formatMoney(data.stats.total_expense);
+        }
+        
+        // Обновляем круговую диаграмму
+        const pieCanvas = document.getElementById('categoryPieChart');
+        if (!pieCanvas) {
+            console.error('Canvas categoryPieChart не найден');
+            return;
+        }
+        
+        if (pieChart) {
+            pieChart.destroy();
+        }
+        
+        const categories = data.expenses_by_category;
+        console.log('Категории расходов:', categories);
+        
+        const pieCtx = pieCanvas.getContext('2d');
+        
+        if (categories && categories.length > 0) {
+            pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: categories.map(c => c.name),
+                    datasets: [{
+                        data: categories.map(c => c.amount),
+                        backgroundColor: categories.map(c => c.color),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const cat = categories[context.dataIndex];
+                                    return `${cat.name}: ${formatMoney(cat.amount)} (${cat.percentage.toFixed(1)}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Обновляем таблицу расходов
+            const tableBody = document.getElementById('expensesTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = categories.map(cat => `
+                    <tr>
+                        <td>
+                            <span class="badge" style="background-color: ${cat.color}; color: white; padding: 5px 10px;">
+                                ${cat.name}
+                            </span>
+                        </td>
+                        <td class="text-end fw-bold text-danger">${formatMoney(cat.amount)}</td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end align-items-center">
+                                <span>${cat.percentage.toFixed(1)}%</span>
+                                <div class="progress ms-2" style="width: 100px; height: 6px;">
+                                    <div class="progress-bar" style="width: ${cat.percentage}%; background-color: ${cat.color};"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        } else {
+            // Очищаем canvas и показываем сообщение
+            const parentDiv = pieCanvas.parentNode;
+            if (parentDiv) {
+                parentDiv.innerHTML = '<div class="text-center text-muted py-4">Нет данных о расходах за выбранный период</div>';
+            }
+            
+            const tableBody = document.getElementById('expensesTableBody');
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Нет расходов за выбранный период</td></tr>';
+            }
+        }
+        
+    } catch (error) {
+        console.error('Ошибка загрузки статистики за период:', error);
+        const tableBody = document.getElementById('expensesTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Ошибка загрузки данных: ' + error.message + '</td></tr>';
+        }
+    }
+}
+
+// 3. Загрузка бюджета по категориям
+async function loadBudgetProgress() {
+    try {
+        const response = await fetch('/api/categories-with-budget');
+        if (!response.ok) throw new Error('Ошибка загрузки бюджета');
+        const categories = await response.json();
+        
+        const categoriesWithLimit = categories.filter(c => c.monthly_limit && c.monthly_limit > 0);
+        const container = document.getElementById('budgetList');
+        
+        if (categoriesWithLimit.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Функция бюджета готова!</strong> 
+                    <a href="/categories" class="alert-link">Перейдите в категории расходов</a> 
+                    и установите месячные лимиты для отслеживания бюджета.
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = `
+            <div class="list-group">
+                ${categoriesWithLimit.map(cat => {
+                    const spent = cat.spent_this_month || 0;
+                    const limit = cat.monthly_limit;
+                    const percentage = Math.min((spent / limit) * 100, 100);
+                    let progressColor = '#28a745';
+                    if (percentage > 90) progressColor = '#dc3545';
+                    else if (percentage > 70) progressColor = '#ffc107';
+                    
+                    const remaining = limit - spent;
+                    const remainingText = remaining > 0 ? `осталось ${formatMoney(remaining)}` : `превышение на ${formatMoney(Math.abs(remaining))}`;
+                    const remainingClass = remaining > 0 ? 'text-success' : 'text-danger';
+                    
+                    return `
+                        <div class="list-group-item budget-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge me-2" style="background-color: ${cat.color};">${cat.name}</span>
+                                    <small class="text-muted">Лимит: ${formatMoney(limit)}</small>
+                                </div>
+                                <div class="text-end">
+                                    <strong class="text-danger">${formatMoney(spent)}</strong>
+                                    <small class="text-muted"> / ${formatMoney(limit)}</small>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar progress-bar-custom" 
+                                         style="width: ${percentage}%; background-color: ${progressColor};">
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <small class="text-muted">${percentage.toFixed(1)}% использовано</small>
+                                    <small class="${remainingClass}">${remainingText}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    } catch (error) {
+        console.error('Ошибка загрузки бюджета:', error);
+        document.getElementById('budgetList').innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Ошибка загрузки данных бюджета. Убедитесь, что сервер запущен.
+            </div>
+        `;
+    }
+}
+
+// Инициализация дат и обработчиков
+function initDatePickers() {
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const applyBtn = document.getElementById('applyPeriodBtn');
+    
+    if (startDateInput && endDateInput) {
+        startDateInput.value = firstDayOfMonth.toISOString().split('T')[0];
+        endDateInput.value = today.toISOString().split('T')[0];
+        
+        // Загружаем текущий период автоматически
+        loadPeriodStats(
+            firstDayOfMonth.toISOString().split('T')[0], 
+            today.toISOString().split('T')[0]
+        );
+    }
+    
+    if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+            const startDate = startDateInput ? startDateInput.value : null;
+            const endDate = endDateInput ? endDateInput.value : null;
+            if (startDate && endDate) {
+                loadPeriodStats(startDate, endDate);
+            }
+        });
+    }
+}
+
+// Функция для обновления цветов графиков при смене темы
+function updateCharts() {
+    if (trendChart) {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        trendChart.options.scales.y.ticks.color = isDark ? '#ffffff' : '#212529';
+        trendChart.options.scales.x.ticks.color = isDark ? '#ffffff' : '#212529';
+        trendChart.update();
+    }
+    if (pieChart) {
+        pieChart.update();
+    }
+}
+
+// Запуск всех инициализаций
+document.addEventListener('DOMContentLoaded', () => {
+    loadLast30DaysStats();
+    initDatePickers();
+    loadBudgetProgress();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование регулярной транзакции - Финансы{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>
+                    Редактирование регулярной транзакции
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('regular_transaction_edit', id=regular.id) }}">
+                    
+                    <!-- Тип транзакции (нередактируемый) -->
+                    <div class="mb-3">
+                        <label class="form-label">Тип</label>
+                        <div>
+                            {% if regular.type == 'expense' %}
+                                <span class="badge bg-danger">Расход</span>
+                            {% else %}
+                                <span class="badge bg-success">Доход</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Название -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Название <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ regular.name }}" required>
+                    </div>
+
+                    <!-- Категория -->
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Категория <span class="text-danger">*</span></label>
+                        <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="">Выберите категорию</option>
+                            {% for cat in categories %}
+                                {% if cat.type == regular.type %}
+                                <option value="{{ cat.id }}" 
+                                        {% if cat.id == regular.category_id %}selected{% endif %}
+                                        style="color: {{ cat.color }};">
+                                    {{ cat.name }}
+                                </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Сумма -->
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Сумма <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="amount" name="amount" 
+                                   step="0.01" min="0.01" value="{{ regular.amount }}" required>
+                            <span class="input-group-text">₽</span>
+                        </div>
+                    </div>
+
+                    <!-- Периодичность -->
+                    <div class="mb-3">
+                        <label for="frequency" class="form-label">Периодичность</label>
+                        <select class="form-select" id="frequency" name="frequency">
+                            <option value="daily" {% if regular.frequency == 'daily' %}selected{% endif %}>Ежедневно</option>
+                            <option value="weekly" {% if regular.frequency == 'weekly' %}selected{% endif %}>Еженедельно</option>
+                            <option value="monthly" {% if regular.frequency == 'monthly' %}selected{% endif %}>Ежемесячно</option>
+                        </select>
+                    </div>
+
+                    <!-- Даты -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">Дата начала</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" 
+                                       value="{{ regular.start_date.strftime('%Y-%m-%d') }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">Дата окончания (опционально)</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" 
+                                       value="{{ regular.end_date.strftime('%Y-%m-%d') if regular.end_date else '' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Комментарий -->
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Комментарий</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="2">{{ regular.comment or '' }}</textarea>
+                    </div>
+
+                    <!-- Активность -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                   {% if regular.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Активна
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Информация о выполнении -->
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            Последнее выполнение: {{ regular.formatted_last_executed }}<br>
+                            Следующее выполнение: {{ regular.formatted_next_execution }}
+                        </small>
+                    </div>
+
+                    <!-- Кнопки -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('regular_transactions_list') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Новый счет - Финансы{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Новый счет</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Название счета</label>
+                        <input type="text" class="form-control" id="name" name="name" required 
+                               placeholder="Например: Наличные, Карта Сбербанка, Копилка">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Тип счета</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="type" id="typeCash" value="cash" checked>
+                            <label class="form-check-label" for="typeCash">
+                                <i class="fas fa-money-bill-wave me-1"></i>Наличные
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="type" id="typeCard" value="card">
+                            <label class="form-check-label" for="typeCard">
+                                <i class="fas fa-credit-card me-1"></i>Банковская карта
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="type" id="typeSavings" value="savings">
+                            <label class="form-check-label" for="typeSavings">
+                                <i class="fas fa-piggy-bank me-1"></i>Сберегательный счет
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="initial_balance" class="form-label">Начальный баланс (₽)</label>
+                        <input type="number" class="form-control" id="initial_balance" name="initial_balance" 
+                               step="0.01" value="0">
+                        <small class="text-muted">Сколько денег уже есть на счете?</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="icon" class="form-label">Иконка</label>
+                        <select class="form-select" id="icon" name="icon">
+                            <option value="fa-wallet">👛 Кошелек</option>
+                            <option value="fa-credit-card">💳 Карта</option>
+                            <option value="fa-piggy-bank">🐷 Копилка</option>
+                            <option value="fa-building">🏦 Банк</option>
+                            <option value="fa-money-bill-wave">💰 Деньги</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Цвет</label>
+                        <input type="color" class="form-control form-control-color" id="color" name="color" 
+                               value="#007bff" style="height: 45px;">
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('accounts_list') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Создать счет
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

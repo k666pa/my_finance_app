@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if type == 'expense' %}
+        Новый расход - Финансы
+    {% else %}
+        Новый доход - Финансы
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header {% if type == 'expense' %}bg-danger{% else %}bg-success{% endif %} text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-{% if type == 'expense' %}minus-circle{% else %}plus-circle{% endif %} me-2"></i>
+                    {% if type == 'expense' %}
+                        Новая транзакция расхода
+                    {% else %}
+                        Новая транзакция дохода
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('transaction_create') }}">
+                    <input type="hidden" name="type" value="{{ type }}">
+
+                    <!-- Категория -->
+                    <div class="mb-3">
+                        <label for="category_id" class="form-label">Категория <span class="text-danger">*</span></label>
+                        <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="">Выберите категорию</option>
+                            {% if type == 'expense' %}
+                                {% for cat in categories if cat.type == 'expense' %}
+                                <option value="{{ cat.id }}" style="color: {{ cat.color }};">
+                                    {{ cat.name }}
+                                </option>
+                                {% endfor %}
+                            {% else %}
+                                {% for cat in categories if cat.type == 'income' %}
+                                <option value="{{ cat.id }}" style="color: {{ cat.color }};">
+                                    {{ cat.name }}
+                                </option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <!-- Счет -->
+                    <div class="mb-3">
+                        <label for="account_id" class="form-label">Счет <span class="text-danger">*</span></label>
+                        <select class="form-select" id="account_id" name="account_id" required>
+                            <option value="">Выберите счет</option>
+                            {% if accounts %}
+                                {% for account in accounts %}
+                                <option value="{{ account.id }}">
+                                    <i class="fas {{ account.icon }}"></i> {{ account.name }}
+                                </option>
+                                {% endfor %}
+                            {% else %}
+                                <option value="" disabled>Нет доступных счетов. Создайте счет в разделе "Счета"</option>
+                            {% endif %}
+                        </select>
+                        {% if not accounts %}
+                        <small class="text-danger">
+                            <a href="{{ url_for('accounts_list') }}">Создать счет</a>
+                        </small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Сумма -->
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Сумма <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="amount" name="amount" 
+                                   step="0.01" min="0.01" required>
+                            <span class="input-group-text">₽</span>
+                        </div>
+                    </div>
+
+                    <!-- Дата -->
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Дата</label>
+                        <input type="date" class="form-control" id="date" name="date" 
+                               value="{{ today }}">
+                    </div>
+
+                    <!-- Комментарий -->
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Комментарий</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="2" 
+                                  placeholder="Необязательно"></textarea>
+                    </div>
+
+                    <!-- Регулярная транзакция -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_regular" name="is_regular">
+                            <label class="form-check-label" for="is_regular">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                Повторяющаяся транзакция
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Блок для регулярной транзакции (скрыт по умолчанию) -->
+                    <div id="regularBlock" style="display: none;">
+                        <hr>
+                        <h6><i class="fas fa-calendar-repeat me-1"></i>Настройки повторения</h6>
+                        
+                        <div class="mb-3">
+                            <label for="regular_name" class="form-label">Название шаблона <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="regular_name" name="regular_name" 
+                                   placeholder="Например: Аренда квартиры">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="frequency" class="form-label">Периодичность</label>
+                            <select class="form-select" id="frequency" name="frequency">
+                                <option value="daily">Ежедневно</option>
+                                <option value="weekly">Еженедельно</option>
+                                <option value="monthly" selected>Ежемесячно</option>
+                            </select>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="start_date" class="form-label">Дата начала</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" 
+                                           value="{{ today }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="end_date" class="form-label">Дата окончания (опционально)</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('transactions_list') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Отмена
+                        </a>
+                        <button type="submit" class="btn btn-{% if type == 'expense' %}danger{% else %}success{% endif %}">
+                            <i class="fas fa-save me-1"></i>Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Показываем/скрываем блок с настройками регулярной транзакции
+const regularCheckbox = document.getElementById('is_regular');
+if (regularCheckbox) {
+    regularCheckbox.addEventListener('change', function() {
+        const regularBlock = document.getElementById('regularBlock');
+        const regularName = document.getElementById('regular_name');
+        
+        if (this.checked) {
+            regularBlock.style.display = 'block';
+            if (regularName) regularName.required = true;
+        } else {
+            regularBlock.style.display = 'none';
+            if (regularName) regularName.required = false;
+        }
+    });
+}
+</script>
+{% endblock %}

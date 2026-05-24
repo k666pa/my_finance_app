@@ -1,0 +1,71 @@
+
+{% extends "base.html" %}
+
+{% block title %}Редактирование категории - Финансы{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-edit me-2"></i>Редактирование категории</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('category_edit', id=category.id) }}">
+                    <!--Название -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Название <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" 
+                               value="{{ category.name }}" required>
+                    </div>
+
+                    <!-- Тип -->
+                    <div class="mb-3">
+                        <label class="form-label">Тип <span class="text-danger">*</span></label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="type" id="typeExpense" 
+                                   value="expense" {% if category.type == 'expense' %}checked{% endif %}>
+                            <label class="form-check-label" for="typeExpense">
+                                <span class="badge bg-danger">Расход</span>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="type" id="typeIncome" 
+                                   value="income" {% if category.type == 'income' %}checked{% endif %}>
+                            <label class="form-check-label" for="typeIncome">
+                                <span class="badge bg-success">Доход</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Цвет -->
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Цвет</label>
+                        <input type="color" class="form-control form-control-color" id="color" 
+                               name="color" value="{{ category.color }}" style="height: 38px; padding: 2px;">
+                    </div>
+                    <div class="mb-3">
+                        <label for="monthly_limit" class="form-label">
+                            <i class="fas fa-chart-line me-1"></i>Месячный лимит (₽)
+                        </label>
+                        <input type="number" class="form-control" id="monthly_limit" name="monthly_limit" 
+                               step="0.01" min="0" value="{{ category.monthly_limit if category.monthly_limit else '' }}"
+                               placeholder="Необязательно">
+                        <small class="text-muted">Установите лимит для отслеживания бюджета по этой категории</small>
+                    </div>
+
+                    <!-- Кнопки --> 
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('categories_list') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
